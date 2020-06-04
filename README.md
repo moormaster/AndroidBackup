@@ -1,5 +1,9 @@
 # Bash script to backup all third party apks from android phone
 
+## Dependencies
+
+* adb (Android Debug Bridge)
+
 ## Example session
 
 ```
