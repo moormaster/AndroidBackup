@@ -15,6 +15,7 @@ main() {
 
 	local apkfile
 	local package
+	local -A ispackageinstalled
 
 	if ! [ -d "$apkdirectory" ]
 	then
@@ -32,18 +33,17 @@ main() {
 
 	if [ $onlynotinstalled -eq 1 ]
 	then
-		local tmpdir="$( mktemp -d )"
-		list-thirdparty-packages | while read package
+		while read package
 		do
-			touch "$tmpdir/$package"
-		done
+			ispackageinstalled[$package]=1
+		done < <(list-thirdparty-packages )
 	fi
 
-	find "$apkdirectory" -type f -name "*.apk" | while read apkfile
+	while read apkfile
 	do
 		local package="$( basename "$apkfile" ".apk" )"
 
-		if [ $onlynotinstalled -eq 1 ] && [ -f "$tmpdir/$package" ]
+		if [ $onlynotinstalled -eq 1 ] && [ "${ispackageinstalled[$package]}" == "1" ]
 		then
 			echo "skippped already installed package: $package" 1>&2
 			continue
@@ -56,9 +56,7 @@ main() {
 		adb shell -n settings put global verifier_verify_adb_installs 0
 		adb install "$apkfile"
 		adb shell -n settings put global verifier_verify_adb_installs "${verifier_verify_adb_installs_oldvalue}"
-	done
-
-	rm -rf "$tmpdir"
+	done < <( find "$apkdirectory" -type f -name "*.apk" )
 }
 
 list-thirdparty-packages() {
