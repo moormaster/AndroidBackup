@@ -51,10 +51,11 @@ main() {
 
 		echo "installing package $package" 1>&2
 		
-		local verifier_verify_adb_installs_oldvalue="$( adb shell settings get global verifier_verify_adb_installs )"
-		adb shell settings put global verifier_verify_adb_installs 0
+		local verifier_verify_adb_installs_oldvalue="$( adb shell -n settings get global verifier_verify_adb_installs )"
+		
+		adb shell -n settings put global verifier_verify_adb_installs 0
 		adb install "$apkfile"
-		adb shell settings put global verifier_verify_adb_installs "${verifier_verify_adb_installs_oldvalue}"
+		adb shell -n settings put global verifier_verify_adb_installs "${verifier_verify_adb_installs_oldvalue}"
 	done
 
 	rm -rf "$tmpdir"
@@ -63,7 +64,7 @@ main() {
 list-thirdparty-packages() {
 	local package
 
-	adb shell cmd package list packages -3 | sed -e "s/^package://" -
+	adb shell -n cmd package list packages -3 | sed -e "s/^package://" -
 }
 
 args=( "$0" "$@" )

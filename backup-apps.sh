@@ -57,7 +57,7 @@ backup-apk-of-package() {
 }
 
 list-thirdparty-packages() {
-	adb shell cmd package list packages -f -3
+	adb shell -n cmd package list packages -f -3
 }
 
 parse-apk-filename() {
