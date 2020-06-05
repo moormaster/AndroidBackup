@@ -3,14 +3,16 @@
 usage() {
 	echo "$0 [-h | --help] [-l | --list-only] <target directory>" 1>&2
 	echo "	target directory	Target directory where apk files are backed up to. Defaults to the current directory." 1>&2
-	echo "	-h			shows this help message" 1>&2
+	echo "	-h			Shows this help message" 1>&2
 	echo "	--help" 1>&2
-	echo "	-l			only outputs the list of package names that would be backed up"
+	echo "	-l			Only outputs the list of package names that would be backed up"
 	echo "	--list-only"
 }
 
 main() {
 	local targetdirectory="$1"
+
+	local line
 
 	if ! [ -d "$1" ]
 	then
@@ -29,6 +31,8 @@ main() {
 }
 
 main-list-only() {
+	local line
+
 	list-thirdparty-packages | while read line
 	do
 		local package="$( parse-package-name "$line" )"
@@ -75,10 +79,10 @@ parse-package-name() {
 }
 
 args=( "$0" "$@" )
-execution_done=0
-flag_list_only=0
+flag_listonly=0
+targetdirectory=""
 
-while ! [ ${execution_done} -eq 1 ]
+while [ $OPTIND -le $# ]
 do
 	case "${args[$OPTIND]}" in
 		-h | --help)
@@ -87,19 +91,21 @@ do
 			;;
 
 		-l | --list-only)
-			flag_list_only=1
+			flag_listonly=1
 			;;
 
 		*)
-			if [ ${flag_list_only} -eq 1 ]
-			then
-				main-list-only "${@}"
-			else
-				main "${@}"
-			fi
-			execution_done=1
+			targetdirectory="${args[$OPTIND]}"
 			;;
 	esac
 
 	OPTIND=$(( $OPTIND + 1))
 done
+
+if [ ${flag_listonly} -eq 1 ]
+then
+	main-list-only "${targetdirectory}"
+else
+	main "${targetdirectory}"
+fi
+
