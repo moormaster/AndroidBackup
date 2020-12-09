@@ -86,7 +86,7 @@ parse-package-name() {
 	local line="$1"
 
 	line="${line#package:}"
-	line="${line/\[^=\]*=/}"
+	line="${line/*=/}"
 
 	echo -n "$line"
 }
