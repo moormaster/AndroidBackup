@@ -5,6 +5,8 @@ usage() {
 	echo "	target directory	Target directory where apk files are backed up to. Defaults to the current directory." 1>&2
 	echo "	-h			Shows this help message" 1>&2
 	echo "	--help" 1>&2
+	echo "  -f			Only outputs the list of file names that would be pulled with adb"
+	echo "	--file-list-only"
 	echo "	-l			Only outputs the list of package names that would be backed up"
 	echo "	--list-only"
 }
@@ -41,6 +43,17 @@ main-list-only() {
 	done
 }
 
+main-filelist-only() {
+	local line
+
+	list-thirdparty-packages | while read line
+	do
+		local apkfile="$( parse-apk-filename "$line" )"
+
+		echo "$apkfile"
+	done
+}
+
 backup-apk-of-package() {
 	local apkfile="$1"
 	local package="$2"
@@ -64,7 +77,7 @@ parse-apk-filename() {
 	local line="$1"
 
 	line="${line#package:}"
-	line="${line/=*/}"
+	line="${line/.apk=*/}.apk"
 
 	echo -n "$line"
 }
@@ -73,13 +86,14 @@ parse-package-name() {
 	local line="$1"
 
 	line="${line#package:}"
-	line="${line/[^=]*=/}"
+	line="${line/\[^=\]*=/}"
 
 	echo -n "$line"
 }
 
 args=( "$0" "$@" )
 flag_listonly=0
+flag_filelistonly=0
 targetdirectory=""
 
 while [ $OPTIND -le $# ]
@@ -89,6 +103,11 @@ do
 			usage
 			exit 1
 			;;
+
+		-f | --file-list-only)
+			flag_filelistonly=1
+			;;
+
 
 		-l | --list-only)
 			flag_listonly=1
@@ -102,9 +121,19 @@ do
 	OPTIND=$(( $OPTIND + 1))
 done
 
+if [ ${flag_filelistonly} -eq 1 ] && [ ${flag_listonly} -eq 1]
+then
+	echo "-f and -l parameters may not be combined" >&2
+	usage
+	exit 1
+fi
+
 if [ ${flag_listonly} -eq 1 ]
 then
-	main-list-only "${targetdirectory}"
+	main-list-only
+elif [ ${flag_filelistonly} -eq 1 ]
+then
+	main-filelist-only
 else
 	main "${targetdirectory}"
 fi
