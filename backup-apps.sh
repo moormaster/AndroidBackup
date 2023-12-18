@@ -121,7 +121,7 @@ do
 	OPTIND=$(( $OPTIND + 1))
 done
 
-if [ ${flag_filelistonly} -eq 1 ] && [ ${flag_listonly} -eq 1]
+if [ ${flag_filelistonly} -eq 1 ] && [ ${flag_listonly} -eq 1 ]
 then
 	echo "-f and -l parameters may not be combined" >&2
 	usage
