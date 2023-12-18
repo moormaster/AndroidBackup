@@ -1,17 +1,20 @@
 #!/bin/bash
 
 usage() {
-	echo "$0 [-h | --help] [-l | --list-only] <apk directory>" 1>&2
+	echo "$0 [-h | --help] [-n | --if-not-installed] [-l | --list-only] <apk directory>" 1>&2
 	echo "	apk directory		Directory where apk files are found. Defaults to the current directory." 1>&2
 	echo "	-h			Shows this help message" 1>&2
 	echo "	--help" 1>&2
 	echo "	-n			Restores only those packages which are not installed. (Requires apk file name to be PACKAGE-NAME.apk)" 1>&2
 	echo "	--if-not-installed" 1>&2
+	echo "	-l			Only lists packages found in backup dir" 1>&2
+	echo "	--list-only" 1>&2
 }
 
 main() {
 	local apkdirectory="$1"
 	local onlynotinstalled="$2"
+	local listonly="$3"
 
 	local apkfile
 	local package
@@ -27,8 +30,11 @@ main() {
 	if [ "$onlynotinstalled" == "" ]
 	then
 		onlynotinstalled=0
-	else
-		onlynotinstalled=1
+	fi
+
+	if [ "$listonly" == "" ]
+	then
+		listonly=0
 	fi
 
 	if [ $onlynotinstalled -eq 1 ]
@@ -53,9 +59,12 @@ main() {
 		
 		local verifier_verify_adb_installs_oldvalue="$( adb shell -n settings get global verifier_verify_adb_installs )"
 		
-		adb shell -n settings put global verifier_verify_adb_installs 0
-		adb install "$apkfile"
-		adb shell -n settings put global verifier_verify_adb_installs "${verifier_verify_adb_installs_oldvalue}"
+		if [ "$listonly" -eq 0 ]
+		then
+			adb shell -n settings put global verifier_verify_adb_installs 0
+			adb install "$apkfile"
+			adb shell -n settings put global verifier_verify_adb_installs "${verifier_verify_adb_installs_oldvalue}"
+		fi
 	done < <( find "$apkdirectory" -type f -name "*.apk" )
 }
 
@@ -67,6 +76,7 @@ list-thirdparty-packages() {
 
 args=( "$0" "$@" )
 flag_ifnotinstalled=0
+flag_listonly=0
 apkdirectory=""
 
 while [ $OPTIND -le $# ]
@@ -75,6 +85,10 @@ do
 		-h | --help)
 			usage
 			exit 1
+			;;
+
+		-l | --list-only)
+			flag_listonly=1
 			;;
 
 		-n | --if-not-installed)
@@ -89,10 +103,5 @@ do
 	OPTIND=$(( $OPTIND + 1))
 done
 
-if [ ${flag_ifnotinstalled} -eq 1 ]
-then
-	main "${apkdirectory}" "${flag_ifnotinstalled}"
-else
-	main "${apkdirectory}"
-fi
+main "${apkdirectory}" "${flag_ifnotinstalled}" "${flag_listonly}"
 
